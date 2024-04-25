@@ -1,0 +1,52 @@
+#!/bin/sh
+### BEGIN INIT INFO
+# Provides:          zookeeper
+# Required-Start:    $local_fs $remote_fs $network $syslog
+# Required-Stop:     $local_fs $remote_fs $network $syslog
+# Default-Start:     2 3 4 5
+# Default-Stop:      0 1 6
+# Short-Description: Zookeeper distributed coordination service
+# Description:       Zookeeper is a distributed coordination service.
+### END INIT INFO
+
+ZK_HOME=/opt/kafka
+ZK_BIN=$ZK_HOME/bin
+ZK_CONF=$ZK_HOME/config
+ZK_LOG=$ZK_HOME/logs/zookeeper.log
+ZK_PID=$ZK_HOME/zookeeper.pid
+
+case "$1" in
+    start)
+        echo "Starting Zookeeper..."
+        su - kafka -c "$ZK_BIN/zookeeper-server-start.sh $ZK_CONF/zookeeper.properties > $ZK_LOG 2>&1 & echo \$! > $ZK_PID"
+        ;;
+    stop)
+        echo "Stopping Zookeeper..."
+        su - kafka -c "$ZK_BIN/zookeeper-server-stop.sh"
+        ;;
+    restart)
+        $0 stop
+        sleep 2
+        $0 start
+        ;;
+    status)
+        if [ -f "$ZK_PID" ]; then
+            PID=$(cat "$ZK_PID")
+            if ps -p $PID > /dev/null; then
+                echo "Zookeeper is running (pid $PID)"
+            else
+                echo "Zookeeper is not running"
+                exit 1
+            fi
+        else
+            echo "Zookeeper is not running"
+            exit 1
+        fi
+        ;;
+    *)
+        echo "Usage: $0 {start|stop|restart|status}"
+        exit 1
+        ;;
+esac
+
+exit 0
